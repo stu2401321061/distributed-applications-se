@@ -1,0 +1,1312 @@
+openapi: 3.0.3
+info:
+  title: Smart Habit Builder System API
+  version: 1.0.0
+  description: |
+    Smart Habit Builder System is a planned software system for habit tracking and productivity management.
+
+    The project will consist of two main parts:
+    - Back-end REST API developed with ASP.NET Core Web API
+    - Front-end client application developed with ASP.NET Core MVC
+
+    The system is planned to support full CRUD operations for the following entities:
+    - Users
+    - Habits
+    - Habit Categories
+    - Habit Goals
+    - Habit Logs
+    - Habit Reminders
+
+    Planned architecture and technologies:
+    - Entity Framework Core for database access
+    - SQL Server relational database
+    - Repository Pattern for abstraction of data access logic
+    - Generic repositories for common CRUD operations
+    - Specialized repositories for filtering and business-specific operations
+    - AutoMapper for object mapping between entities and DTO models
+    - DTO models for request and response separation
+    - JWT Bearer Authentication for secure access control
+
+    The API is planned to include:
+    - User registration and authentication
+    - Authorization based on JWT tokens
+    - Filtering through query parameters
+    - Sorting functionality
+    - Pagination support
+    - Validation of incoming data
+    - User-specific resource protection
+
+    Filtering and pagination functionality will be implemented through query parameters such as:
+    - Name
+    - Email
+    - HabitId
+    - CategoryId
+    - Status
+    - IsCompleted
+    - IsEnabled
+    - SortBy
+    - Descending
+    - PageNumber
+    - PageSize
+
+    Validation rules are expected to include:
+    - Required fields
+    - Maximum string lengths
+    - Numeric range validation
+    - Enum validation
+    - Email format validation
+    - Date and time validation
+
+    The API documentation is written using OpenAPI 3.0.3 specification
+    and can be validated through Swagger Editor.
+
+servers:
+  - url: https://localhost:7043/api 
+
+tags:
+  - name: Auth
+  - name: Users
+  - name: Habits
+  - name: Categories
+  - name: Goals
+  - name: Logs
+  - name: Reminders
+
+paths:
+  /Auth/login:
+    post:
+      tags: [Auth]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginDto"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid request
+        "401":
+          description: Invalid credentials
+
+  /Users:
+    get:
+      tags: [Users]
+      summary: Get all users
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Username"
+        - $ref: "#/components/parameters/Email"
+        - $ref: "#/components/parameters/SortBy"
+        - $ref: "#/components/parameters/Descending"
+        - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserReadDto"
+        "401":
+          description: Unauthorized
+
+    post:
+      tags: [Users]
+      summary: Create user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreateDto"
+      responses:
+        "201":
+          description: User created
+        "400":
+          description: Validation error
+
+  /Users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserReadDto"
+        "403":
+          description: Forbidden
+        "404":
+          description: User not found
+
+    put:
+      tags: [Users]
+      summary: Update user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdateDto"
+      responses:
+        "204":
+          description: User updated
+        "400":
+          description: Validation error
+        "403":
+          description: Forbidden
+        "404":
+          description: User not found
+
+    delete:
+      tags: [Users]
+      summary: Delete user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: User deleted
+        "403":
+          description: Forbidden
+        "404":
+          description: User not found
+
+  /Habits:
+    get:
+      tags: [Habits]
+      summary: Get all habits
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Name
+          in: query
+          schema:
+            type: string
+        - name: Description
+          in: query
+          schema:
+            type: string
+        - name: TargetCount
+          in: query
+          schema:
+            type: integer
+        - name: Frequency
+          in: query
+          schema:
+            $ref: "#/components/schemas/FrequencyType"
+        - name: IsActive
+          in: query
+          schema:
+            type: boolean
+        - name: CategoryId
+          in: query
+          schema:
+            type: integer
+        - name: DifficultyLevel
+          in: query
+          schema:
+            type: integer
+        - name: Priority
+          in: query
+          schema:
+            $ref: "#/components/schemas/HabitPriority"
+        - $ref: "#/components/parameters/SortBy"
+        - $ref: "#/components/parameters/Descending"
+        - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: List of habits
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HabitReadDto"
+
+    post:
+      tags: [Habits]
+      summary: Create habit
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitCreateDto"
+      responses:
+        "201":
+          description: Habit created
+        "400":
+          description: Validation error
+        "403":
+          description: Category does not belong to current user
+
+  /Habits/{id}:
+    get:
+      tags: [Habits]
+      summary: Get habit by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Habit details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HabitReadDto"
+        "403":
+          description: Forbidden
+        "404":
+          description: Habit not found
+
+    put:
+      tags: [Habits]
+      summary: Update habit
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HabitUpdateDto"
+      responses:
+        "204":
+          description: Habit updated
+        "400":
+          description: Validation error
+        "403":
+          description: Forbidden
+        "404":
+          description: Habit not found
+
+    delete:
+      tags: [Habits]
+      summary: Delete habit
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Habit deleted
+        "403":
+          description: Forbidden
+        "404":
+          description: Habit not found
+
+  /Categories:
+    get:
+      tags: [Categories]
+      summary: Get all categories
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: Name
+          in: query
+          schema:
+            type: string
+        - name: Color
+          in: query
+          schema:
+            type: string
+            example: "#7E57C2"
+        - $ref: "#/components/parameters/SortBy"
+        - $ref: "#/components/parameters/Descending"
+        - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryReadDto"
+
+    post:
+      tags: [Categories]
+      summary: Create category
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryCreateDto"
+      responses:
+        "201":
+          description: Category created
+        "400":
+          description: Validation error
+
+  /Categories/{id}:
+    get:
+      tags: [Categories]
+      summary: Get category by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Category details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategoryReadDto"
+        "403":
+          description: Forbidden
+        "404":
+          description: Category not found
+
+    put:
+      tags: [Categories]
+      summary: Update category
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryUpdateDto"
+      responses:
+        "204":
+          description: Category updated
+        "400":
+          description: Validation error
+        "403":
+          description: Forbidden
+        "404":
+          description: Category not found
+
+    delete:
+      tags: [Categories]
+      summary: Delete category
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Category deleted
+        "403":
+          description: Forbidden
+        "404":
+          description: Category not found
+
+  /Goals:
+    get:
+      tags: [Goals]
+      summary: Get all goals
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: HabitId
+          in: query
+          schema:
+            type: integer
+        - name: Title
+          in: query
+          schema:
+            type: string
+        - name: IsCompleted
+          in: query
+          schema:
+            type: boolean
+        - $ref: "#/components/parameters/SortBy"
+        - $ref: "#/components/parameters/Descending"
+        - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: List of goals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GoalReadDto"
+
+    post:
+      tags: [Goals]
+      summary: Create goal
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalCreateDto"
+      responses:
+        "201":
+          description: Goal created
+        "400":
+          description: Validation error
+        "403":
+          description: Habit does not belong to current user
+
+  /Goals/{id}:
+    get:
+      tags: [Goals]
+      summary: Get goal by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Goal details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoalReadDto"
+        "403":
+          description: Forbidden
+        "404":
+          description: Goal not found
+
+    put:
+      tags: [Goals]
+      summary: Update goal
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalUpdateDto"
+      responses:
+        "204":
+          description: Goal updated
+        "400":
+          description: Validation error
+        "403":
+          description: Forbidden
+        "404":
+          description: Goal not found
+
+    delete:
+      tags: [Goals]
+      summary: Delete goal
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Goal deleted
+        "403":
+          description: Forbidden
+        "404":
+          description: Goal not found
+
+  /Logs:
+    get:
+      tags: [Logs]
+      summary: Get all logs
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: HabitId
+          in: query
+          schema:
+            type: integer
+        - name: Status
+          in: query
+          schema:
+            $ref: "#/components/schemas/HabitStatus"
+        - name: FromDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: ToDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - $ref: "#/components/parameters/SortBy"
+        - $ref: "#/components/parameters/Descending"
+        - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: List of logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LogReadDto"
+
+    post:
+      tags: [Logs]
+      summary: Create log
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LogCreateDto"
+      responses:
+        "201":
+          description: Log created
+        "400":
+          description: Validation error
+        "403":
+          description: Habit does not belong to current user
+
+  /Logs/{id}:
+    get:
+      tags: [Logs]
+      summary: Get log by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Log details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogReadDto"
+        "403":
+          description: Forbidden
+        "404":
+          description: Log not found
+
+    put:
+      tags: [Logs]
+      summary: Update log
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LogUpdateDto"
+      responses:
+        "204":
+          description: Log updated
+        "400":
+          description: Validation error
+        "403":
+          description: Forbidden
+        "404":
+          description: Log not found
+
+    delete:
+      tags: [Logs]
+      summary: Delete log
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Log deleted
+        "403":
+          description: Forbidden
+        "404":
+          description: Log not found
+
+  /Reminders:
+    get:
+      tags: [Reminders]
+      summary: Get all reminders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: HabitId
+          in: query
+          schema:
+            type: integer
+        - name: Message
+          in: query
+          schema:
+            type: string
+        - name: IsEnabled
+          in: query
+          schema:
+            type: boolean
+        - $ref: "#/components/parameters/SortBy"
+        - $ref: "#/components/parameters/Descending"
+        - $ref: "#/components/parameters/PageNumber"
+        - $ref: "#/components/parameters/PageSize"
+      responses:
+        "200":
+          description: List of reminders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReminderReadDto"
+
+    post:
+      tags: [Reminders]
+      summary: Create reminder
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReminderCreateDto"
+      responses:
+        "201":
+          description: Reminder created
+        "400":
+          description: Validation error
+        "403":
+          description: Habit does not belong to current user
+
+  /Reminders/{id}:
+    get:
+      tags: [Reminders]
+      summary: Get reminder by id
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          description: Reminder details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReminderReadDto"
+        "403":
+          description: Forbidden
+        "404":
+          description: Reminder not found
+
+    put:
+      tags: [Reminders]
+      summary: Update reminder
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReminderUpdateDto"
+      responses:
+        "204":
+          description: Reminder updated
+        "400":
+          description: Validation error
+        "403":
+          description: Forbidden
+        "404":
+          description: Reminder not found
+
+    delete:
+      tags: [Reminders]
+      summary: Delete reminder
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "204":
+          description: Reminder deleted
+        "403":
+          description: Forbidden
+        "404":
+          description: Reminder not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+
+    Username:
+      name: Username
+      in: query
+      schema:
+        type: string
+
+    Email:
+      name: Email
+      in: query
+      schema:
+        type: string
+        format: email
+
+    SortBy:
+      name: SortBy
+      in: query
+      schema:
+        type: string
+
+    Descending:
+      name: Descending
+      in: query
+      schema:
+        type: boolean
+        default: false
+
+    PageNumber:
+      name: PageNumber
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    PageSize:
+      name: PageSize
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT bearer token
+
+    LoginDto:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    UserCreateDto:
+      type: object
+      required:
+        - username
+        - email
+        - passwordHash
+      properties:
+        username:
+          type: string
+          maxLength: 50
+        email:
+          type: string
+          format: email
+          maxLength: 100
+        passwordHash:
+          type: string
+          maxLength: 255
+        createdAt:
+          type: string
+          format: date-time
+
+    UserUpdateDto:
+      type: object
+      required:
+        - username
+        - email
+      properties:
+        username:
+          type: string
+          maxLength: 50
+        email:
+          type: string
+          format: email
+          maxLength: 100
+        passwordHash:
+          type: string
+          maxLength: 255
+
+    UserReadDto:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
+
+    HabitCreateDto:
+      type: object
+      required:
+        - name
+        - targetCount
+        - frequency
+        - categoryId
+        - difficultyLevel
+        - priority
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 300
+          nullable: true
+        targetCount:
+          type: integer
+          minimum: 1
+          maximum: 100
+        frequency:
+          $ref: "#/components/schemas/FrequencyType"
+        startDate:
+          type: string
+          format: date-time
+        isActive:
+          type: boolean
+          default: true
+        categoryId:
+          type: integer
+          minimum: 1
+        difficultyLevel:
+          type: integer
+          minimum: 1
+          maximum: 5
+        priority:
+          $ref: "#/components/schemas/HabitPriority"
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    HabitUpdateDto:
+      type: object
+      required:
+        - name
+        - targetCount
+        - frequency
+        - categoryId
+        - difficultyLevel
+        - priority
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 300
+          nullable: true
+        targetCount:
+          type: integer
+          minimum: 1
+          maximum: 100
+        frequency:
+          $ref: "#/components/schemas/FrequencyType"
+        startDate:
+          type: string
+          format: date-time
+        isActive:
+          type: boolean
+        categoryId:
+          type: integer
+          minimum: 1
+        difficultyLevel:
+          type: integer
+          minimum: 1
+          maximum: 5
+        priority:
+          $ref: "#/components/schemas/HabitPriority"
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    HabitReadDto:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        targetCount:
+          type: integer
+        frequency:
+          $ref: "#/components/schemas/FrequencyType"
+        startDate:
+          type: string
+          format: date-time
+        isActive:
+          type: boolean
+        userId:
+          type: integer
+        categoryId:
+          type: integer
+        difficultyLevel:
+          type: integer
+        priority:
+          $ref: "#/components/schemas/HabitPriority"
+        endDate:
+          type: string
+          format: date-time
+          nullable: true
+
+    CategoryCreateDto:
+      type: object
+      required:
+        - name
+        - color
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 200
+          nullable: true
+        color:
+          type: string
+          maxLength: 7
+          pattern: "^#([A-Fa-f0-9]{6})$"
+          example: "#7E57C2"
+        isDefault:
+          type: boolean
+        displayOrder:
+          type: integer
+
+    CategoryUpdateDto:
+      type: object
+      required:
+        - name
+        - color
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 200
+          nullable: true
+        color:
+          type: string
+          maxLength: 7
+          pattern: "^#([A-Fa-f0-9]{6})$"
+          example: "#7E57C2"
+        isDefault:
+          type: boolean
+        displayOrder:
+          type: integer
+
+    CategoryReadDto:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        color:
+          type: string
+          example: "#7E57C2"
+        createdAt:
+          type: string
+          format: date-time
+        isDefault:
+          type: boolean
+        displayOrder:
+          type: integer
+
+    GoalCreateDto:
+      type: object
+      required:
+        - habitId
+        - title
+        - deadline
+      properties:
+        habitId:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          maxLength: 100
+        targetValue:
+          type: integer
+          minimum: 1
+          maximum: 365
+        deadline:
+          type: string
+          format: date-time
+        isCompleted:
+          type: boolean
+
+    GoalUpdateDto:
+      type: object
+      required:
+        - habitId
+        - title
+        - deadline
+      properties:
+        habitId:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          maxLength: 100
+        targetValue:
+          type: integer
+          minimum: 1
+          maximum: 365
+        deadline:
+          type: string
+          format: date-time
+        isCompleted:
+          type: boolean
+
+    GoalReadDto:
+      type: object
+      properties:
+        id:
+          type: integer
+        habitId:
+          type: integer
+        title:
+          type: string
+        targetValue:
+          type: integer
+        deadline:
+          type: string
+          format: date-time
+        isCompleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        currentProgress:
+          type: integer
+        progressPercentage:
+          type: number
+          format: double
+          readOnly: true
+
+    LogCreateDto:
+      type: object
+      required:
+        - habitId
+        - status
+      properties:
+        habitId:
+          type: integer
+          minimum: 1
+        logDate:
+          type: string
+          format: date-time
+        completedCount:
+          type: integer
+          minimum: 0
+          maximum: 100
+        moodRating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        note:
+          type: string
+          maxLength: 250
+          nullable: true
+        durationMinutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+          nullable: true
+        status:
+          $ref: "#/components/schemas/HabitStatus"
+
+    LogUpdateDto:
+      type: object
+      required:
+        - habitId
+        - status
+      properties:
+        habitId:
+          type: integer
+          minimum: 1
+        logDate:
+          type: string
+          format: date-time
+        completedCount:
+          type: integer
+          minimum: 0
+          maximum: 100
+        moodRating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        note:
+          type: string
+          maxLength: 250
+          nullable: true
+        durationMinutes:
+          type: integer
+          minimum: 0
+          maximum: 1440
+          nullable: true
+        status:
+          $ref: "#/components/schemas/HabitStatus"
+
+    LogReadDto:
+      type: object
+      properties:
+        id:
+          type: integer
+        habitId:
+          type: integer
+        logDate:
+          type: string
+          format: date-time
+        completedCount:
+          type: integer
+        moodRating:
+          type: integer
+        note:
+          type: string
+          nullable: true
+        durationMinutes:
+          type: integer
+          nullable: true
+        status:
+          $ref: "#/components/schemas/HabitStatus"
+
+    ReminderCreateDto:
+      type: object
+      required:
+        - habitId
+        - reminderTime
+        - message
+      properties:
+        habitId:
+          type: integer
+          minimum: 1
+        reminderTime:
+          type: string
+          example: "08:30:00"
+          description: TimeSpan value in HH:mm:ss format
+        message:
+          type: string
+          maxLength: 200
+        isEnabled:
+          type: boolean
+
+    ReminderUpdateDto:
+      type: object
+      required:
+        - habitId
+        - reminderTime
+        - message
+      properties:
+        habitId:
+          type: integer
+          minimum: 1
+        reminderTime:
+          type: string
+          example: "08:30:00"
+          description: TimeSpan value in HH:mm:ss format
+        message:
+          type: string
+          maxLength: 200
+        isEnabled:
+          type: boolean
+
+    ReminderReadDto:
+      type: object
+      properties:
+        id:
+          type: integer
+        habitId:
+          type: integer
+        reminderTime:
+          type: string
+          example: "08:30:00"
+        message:
+          type: string
+        isEnabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    FrequencyType:
+      type: integer
+      enum: [1, 2]
+      description: 1 = Daily, 2 = Weekly
+
+    HabitPriority:
+      type: integer
+      enum: [1, 2, 3]
+      description: 1 = Low, 2 = Medium, 3 = High
+
+    HabitStatus:
+      type: integer
+      enum: [1, 2, 3, 4]
+      description: 1 = Completed, 2 = Skipped, 3 = Postponed, 4 = Partial
